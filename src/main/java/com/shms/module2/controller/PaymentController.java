@@ -29,20 +29,23 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final ChequePdfGeneratorService chequePdfGeneratorService;
 
-    // Secured to STUDENT paying their exact requested bounds via the portal
+    // Secured to HALL_CLERK, ACCOUNTS_CLERK recording payments on behalf of students
     @PostMapping("/record")
-    public ResponseEntity<Map<String, Object>> recordPayment(
+    @PreAuthorize("hasAnyAuthority('ROLE_HALL_CLERK', 'ROLE_ACCOUNTS_CLERK', 'ROLE_ADMIN')")
+    public ResponseEntity<?> recordPayment(
             @RequestBody PaymentRecordRequest request,
             @AuthenticationPrincipal User currentUser) {
-
-        Payment executedPayment = paymentService.recordPayment(request, currentUser.getId());
-
-        return ResponseEntity.ok(Map.of(
-            "message", "Payment has been processed entirely",
-            "transactionId", executedPayment.getId(),
-            "amount", executedPayment.getAmountPaid(),
-            "method", executedPayment.getPaymentMode().name()
-        ));
+        try {
+            Payment executedPayment = paymentService.recordPayment(request, currentUser.getId());
+            return ResponseEntity.ok(Map.of(
+                "message", "Payment has been processed entirely",
+                "transactionId", executedPayment.getId(),
+                "amount", executedPayment.getAmountPaid(),
+                "method", executedPayment.getPaymentMode().name()
+            ));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
     }
 
     // Accessible via Mess Manager portals to aggregate and withdraw cleared Hall payments 

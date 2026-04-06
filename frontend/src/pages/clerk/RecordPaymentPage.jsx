@@ -38,7 +38,7 @@ export const RecordPaymentPage = () => {
       studentId: data.studentId,
       amountPaid: parseFloat(data.amountPaid),
       paymentMode: data.paymentMode,
-      referenceNumber: data.referenceNumber || "CASH-TRX"
+      transactionReference: data.referenceNumber || "CASH-TRX"
     });
   };
 

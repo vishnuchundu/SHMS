@@ -37,54 +37,56 @@ export const AuditLogsPage = () => {
 
       {!isError && logs?.length === 0 && (
         <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-16 flex flex-col items-center justify-center">
-           <Server className="w-16 h-16 text-gray-300 mb-4" />
-           <p className="text-xl font-bold text-gray-400">Structural Array Empty</p>
-           <p className="text-sm font-medium text-gray-400 mt-1">No operations have been permanently executed locally.</p>
+          <Server className="w-16 h-16 text-gray-300 mb-4" />
+          <p className="text-xl font-bold text-gray-400">Structural Array Empty</p>
+          <p className="text-sm font-medium text-gray-400 mt-1">No operations have been permanently executed locally.</p>
         </div>
       )}
 
       {logs && logs.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-left border-collapse whitespace-nowrap hide-scroll">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-black tracking-widest uppercase">
-                <th className="px-6 py-4">TIMESTAMP</th>
-                <th className="px-6 py-4">ACTION VECTOR</th>
-                <th className="px-6 py-4 border-l border-gray-100">TARGET REF</th>
-                <th className="px-6 py-4 border-l border-gray-100">EXECUTOR (ID/IP)</th>
-                <th className="px-6 py-4 border-l border-gray-100 w-full">PAYLOAD MEMO</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-medium text-sm text-gray-700">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                     <div className="flex items-center gap-2 text-gray-500 font-bold">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-black tracking-widest uppercase">
+                  <th className="px-6 py-4 whitespace-nowrap">TIMESTAMP</th>
+                  <th className="px-6 py-4 whitespace-nowrap">ACTION VECTOR</th>
+                  <th className="px-6 py-4 border-l border-gray-100 whitespace-nowrap">TARGET REF</th>
+                  <th className="px-6 py-4 border-l border-gray-100 whitespace-nowrap">EXECUTOR (ID)</th>
+                  <th className="px-6 py-4 border-l border-gray-100" style={{minWidth: '280px', maxWidth: '400px'}}>PAYLOAD MEMO</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 font-medium text-sm text-gray-700">
+                {logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-gray-500 font-bold">
                         <CalendarClock size={16} className="text-gray-400" />
                         {new Date(log.timestamp).toLocaleString()}
-                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                     <span className="bg-accent/10 text-accent border border-accent/20 px-3 py-1 rounded shadow-inner text-xs font-black tracking-wide">
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="bg-accent/10 text-accent border border-accent/20 px-3 py-1 rounded shadow-inner text-xs font-black tracking-wide">
                         {log.method}
-                     </span>
-                  </td>
-                  <td className="px-6 py-4 border-l border-gray-50 font-mono text-xs">
-                     {log.entityId?.substring(0, 8)}
-                  </td>
-                  <td className="px-6 py-4 border-l border-gray-50 text-xs">
-                     <div className="flex items-center gap-2 text-gray-500 font-mono">
-                         <Fingerprint size={14} className="text-primary"/>
-                         {log.userId?.substring(0, 8)}
-                     </div>
-                  </td>
-                  <td className="px-6 py-4 border-l border-gray-50 whitespace-pre-wrap leading-relaxed text-gray-600">
-                     {log.details}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 border-l border-gray-50 font-mono text-xs whitespace-nowrap">
+                      {log.entityId?.substring(0, 12)}
+                    </td>
+                    <td className="px-6 py-4 border-l border-gray-50 text-xs whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-gray-500 font-mono">
+                        <Fingerprint size={14} className="text-primary" />
+                        {log.userId?.substring(0, 12)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 border-l border-gray-50 break-words leading-relaxed text-gray-600" style={{minWidth: '280px', maxWidth: '400px'}}>
+                      {log.details}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
