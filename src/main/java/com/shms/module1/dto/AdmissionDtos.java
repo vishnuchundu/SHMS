@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.shms.module1.entity.RoomType;
+
 public class AdmissionDtos {
 
     @Data
@@ -13,6 +15,7 @@ public class AdmissionDtos {
     @Builder
     public static class RegistrationRequest {
         private String studentName;
+        private RoomType roomType;
         private String photoFilePath;
     }
 

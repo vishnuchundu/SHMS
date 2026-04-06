@@ -9,6 +9,7 @@ import { Loader } from '../Loader';
 // Structural schemas isolating constraints globally
 const step1Schema = z.object({
   studentName: z.string().min(3, "Applicant Name must span at minimum 3 characters."),
+  roomType: z.enum(['SINGLE', 'TWIN'], { required_error: "Room Type Preference is strictly obligated for DB query limits." })
 });
 
 const step2Schema = z.object({
@@ -41,6 +42,7 @@ export const AdmissionWizard = () => {
     try {
       const payload = {
         studentName: form1.getValues().studentName,
+        roomType: form1.getValues().roomType,
         photoFilePath: data.photoFilePath,
       };
       
@@ -114,6 +116,18 @@ export const AdmissionWizard = () => {
               placeholder="Enter exact matched credentials..."
             />
             {form1.formState.errors.studentName && <span className="text-danger text-xs font-bold mt-2 block">{form1.formState.errors.studentName.message}</span>}
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 tracking-wide mb-2">Room Type Preference</label>
+            <select
+              {...form1.register("roomType")}
+              className={`w-full p-4 border rounded-xl outline-none transition focus:ring-2 appearance-none ${form1.formState.errors.roomType ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary'}`}
+            >
+              <option value="" disabled selected>Select an explicit occupancy configuration...</option>
+              <option value="SINGLE">SINGLE Occupancy (Strict Privacy Constraint)</option>
+              <option value="TWIN">TWIN Occupancy (Mapped Dual Boundaries)</option>
+            </select>
+            {form1.formState.errors.roomType && <span className="text-danger text-xs font-bold mt-2 block">{form1.formState.errors.roomType.message}</span>}
           </div>
           <div className="flex justify-end pt-4">
             <button type="submit" className="flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md">

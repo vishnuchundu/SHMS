@@ -28,6 +28,10 @@ import { PayrollDashboardPage } from './pages/warden/PayrollDashboardPage';
 import { ChairmanDashboardPage } from './pages/admin/ChairmanDashboardPage';
 import { HallExpenseTrackerPage } from './pages/warden/HallExpenseTrackerPage';
 
+// Phase E Module Additions
+import { AuditLogsPage } from './pages/admin/AuditLogsPage';
+import { UserManagementPage } from './pages/admin/UserManagementPage';
+
 // Intelligent Root Index Redirection mapping natively against JWT roles
 const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
@@ -37,7 +41,8 @@ const RoleBasedRedirect = () => {
   if (user.roles.includes('ROLE_STUDENT')) return <Navigate to="/student/dues" replace />;
   if (user.roles.includes('ROLE_ADMIN')) return <Navigate to="/admin/grants" replace />;
   if (user.roles.includes('ROLE_CHAIRMAN')) return <Navigate to="/admin/chairman" replace />;
-  if (user.roles.includes('ROLE_HALL_CLERK')) return <Navigate to="/clerk/admissions" replace />;
+  if (user.roles.includes('ROLE_HALL_CLERK') || user.roles.includes('ROLE_HMC_CLERK')) return <Navigate to="/clerk/admissions" replace />;
+  if (user.roles.includes('ROLE_ACCOUNTS_CLERK')) return <Navigate to="/clerk/payments" replace />;
   if (user.roles.includes('ROLE_HALL_WARDEN') || user.roles.includes('ROLE_CONTROLLING_WARDEN') || user.roles.includes('ROLE_MESS_MANAGER')) return <Navigate to="/warden/occupancy" replace />;
 
   return <Navigate to="/login" replace />; // Fallback
@@ -72,7 +77,7 @@ function App() {
             </Route>
             
             {/* 2. CLERK BLOCK */}
-            <Route element={<ProtectedRoute allowedRoles={['ROLE_HALL_CLERK', 'ROLE_ADMIN']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['ROLE_HALL_CLERK', 'ROLE_HMC_CLERK', 'ROLE_ACCOUNTS_CLERK', 'ROLE_ADMIN']} />}>
               <Route path="/clerk/admissions" element={<AdmissionsPage />} />
               <Route path="/clerk/attendance" element={<StaffDashboardPage />} />
               <Route path="/clerk/payments" element={<RecordPaymentPage />} />
@@ -90,9 +95,9 @@ function App() {
             {/* 4. ADMIN BLOCK */}
             <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_CHAIRMAN']} />}>
               <Route path="/admin/chairman" element={<ChairmanDashboardPage />} />
-              <Route path="/admin/users" element={<TemporaryDashboard title="User Management" />} />
+              <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/grants" element={<TemporaryDashboard title="Grant Distributions" />} />
-              <Route path="/admin/logs" element={<TemporaryDashboard title="System Audit Logs" />} />
+              <Route path="/admin/logs" element={<AuditLogsPage />} />
             </Route>
 
           </Route>

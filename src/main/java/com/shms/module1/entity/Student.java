@@ -27,5 +27,9 @@ public class Student {
     
     private String roomId; // Manual Reference to Room
     
-    private Double totalDues; // Pre-calculated dues sum
+    private Double roomRentDue;
+    
+    private Double messDue;
+    
+    private Double amenitiesDue;
 }

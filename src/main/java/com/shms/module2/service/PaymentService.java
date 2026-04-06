@@ -1,6 +1,8 @@
 package com.shms.module2.service;
 
 import com.shms.audit.service.AuditLogger;
+import com.shms.core.entity.User;
+import com.shms.core.repository.UserRepository;
 import com.shms.module1.entity.DuesStatus;
 import com.shms.module1.entity.Room;
 import com.shms.module1.entity.Student;
@@ -23,19 +25,24 @@ public class PaymentService {
     private final StudentRepository studentRepository;
     private final RoomRepository roomRepository;
     private final AuditLogger auditLogger;
+    private final UserRepository userRepository;
 
     @Transactional
     public Payment recordPayment(PaymentRecordRequest request, String executorUserId) {
         
-        // 1. Validate Student existence
-        Student student = studentRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Target student does not exist."));
+        // 1. Resolve UI Input Username exactly mapping to internal Database ObjectId boundaries
+        User targetUser = userRepository.findByUsername(request.getStudentId())
+                .orElseThrow(() -> new RuntimeException("Explicit Target Student Username does not physically exist."));
+
+        // 2. Validate Student bounds exactly
+        Student student = studentRepository.findByUserId(targetUser.getId())
+                .orElseThrow(() -> new RuntimeException("Target bounds explicitly does not physically exist as a Student record."));
                 
         // 2. Locate their Hall via their allocated Room
         Room room = roomRepository.findById(student.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Student's current room references an invalid link - cannot map to Hall."));
 
-        // 3. Create the concrete Payment log
+        // 4. Create the concrete Payment log
         Payment payment = Payment.builder()
                 .studentId(student.getId())
                 .hallId(room.getHallId()) // Store snapshot for simple cheque aggregations later
@@ -47,14 +54,16 @@ public class PaymentService {
         
         paymentRepository.save(payment);
         
-        // 4. Update the Student's total outstanding balance dynamically
-        Double currentDues = student.getTotalDues() != null ? student.getTotalDues() : 0.0;
+        // 4. Calculate total organically
+        Double currentDues = (student.getRoomRentDue() != null ? student.getRoomRentDue() : 0.0)
+                + (student.getMessDue() != null ? student.getMessDue() : 0.0)
+                + (student.getAmenitiesDue() != null ? student.getAmenitiesDue() : 0.0);
         Double resultingDues = currentDues - request.getAmountPaid();
-        student.setTotalDues(resultingDues);
-        
-        if (resultingDues <= 0) {
-            student.setDuesStatus(DuesStatus.CLEAR);
-        }
+        // 3. Clear all dues physically
+        student.setRoomRentDue(0.0);
+        student.setMessDue(0.0);
+        student.setAmenitiesDue(0.0);
+        student.setDuesStatus(DuesStatus.CLEAR);
         
         studentRepository.save(student);
 

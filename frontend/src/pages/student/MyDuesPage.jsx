@@ -3,18 +3,23 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
 import { WalletCards, Home, UtensilsCrossed, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import axiosInstance from '../../api/axiosInstance';
 
-// Mocking fetching since there is no native endpoint
-const fetchStudentDues = async (userId) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        messDue: 12500.0,
-        rentDue: 4500.0,
-        amenitiesDue: 1200.0,
-      });
-    }, 800); // Simulated network delay
-  });
+const fetchStudentDues = async () => {
+   const response = await axiosInstance.get('/api/students/me');
+   const userProfile = response.data;
+   
+   const messDue = userProfile.messDue || 0;
+   const rentDue = userProfile.roomRentDue || 0;
+   const amenitiesDue = userProfile.amenitiesDue || 0;
+
+   // We return the actual mathematically explicit values dynamically!
+   return {
+     messDue,
+     rentDue,
+     amenitiesDue,
+     totalDue: messDue + rentDue + amenitiesDue,
+   };
 };
 
 export const MyDuesPage = () => {
@@ -22,14 +27,14 @@ export const MyDuesPage = () => {
 
   const { data: dues, isLoading, isError } = useQuery({
     queryKey: ['studentDues', user?.id],
-    queryFn: () => fetchStudentDues(user?.id),
+    queryFn: fetchStudentDues,
     staleTime: 50000,
   });
 
   if (isLoading) return <Loader />;
   if (isError) return <div className="p-8 text-center text-danger-500 font-bold">Failed to load dues network structural breakdown in query boundaries.</div>;
 
-  const totalDue = dues.messDue + dues.rentDue + dues.amenitiesDue;
+  const totalDue = dues.totalDue;
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-fade-in w-full max-w-6xl mx-auto">

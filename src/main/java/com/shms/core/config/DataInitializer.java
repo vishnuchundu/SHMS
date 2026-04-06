@@ -112,11 +112,17 @@ public class DataInitializer implements CommandLineRunner {
 
                 // Inject Physical Student bindings to guarantee Mass Executions target actual arrays!
                 for (int s = 0; s < occ; s++) {
+                    // Binding student_test User ID natively into the First Array Trace securely mapping all test conditions
+                    String dbLinkedUserId = (i == 1 && s == 0) ? userRepository.findByUsername("student_test").get().getId() : java.util.UUID.randomUUID().toString();
+                    
                     Student simulatedUser = Student.builder()
-                            .studentName("Simulated Student " + i + "-" + s)
+                            .userId(dbLinkedUserId)
+                            .studentName(i == 1 && s == 0 ? "John Test (student_test)" : "Simulated Student " + i + "-" + s)
                             .duesStatus(DuesStatus.CLEAR)
                             .roomId(r.getId())
-                            .totalDues(0.0)
+                            .roomRentDue(0.0)
+                            .messDue(0.0)
+                            .amenitiesDue(0.0)
                             .build();
                     studentRepository.save(simulatedUser);
                 }

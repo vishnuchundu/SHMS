@@ -41,11 +41,11 @@ public class BillingService {
         // 4. Batch update their dues
         int count = 0;
         for (Student student : students) {
-            Double currentDues = student.getTotalDues() != null ? student.getTotalDues() : 0.0;
-            Double updatedDues = currentDues + chargePerStudent;
+            Double currentMessDues = student.getMessDue() != null ? student.getMessDue() : 0.0;
+            Double updatedMessDues = currentMessDues + chargePerStudent;
             
-            student.setTotalDues(updatedDues);
-            if (updatedDues > 0) {
+            student.setMessDue(updatedMessDues);
+            if (updatedMessDues > 0) {
                 student.setDuesStatus(DuesStatus.PENDING);
             }
             count++;

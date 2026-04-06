@@ -37,9 +37,12 @@ public class RoomAllotmentService {
             throw new RuntimeException("User is already admitted as a student.");
         }
 
-        // 2. Auto-assign the first available room
-        Room selectedRoom = roomRepository.findFirstAvailableRoom()
-                .orElseThrow(() -> new RuntimeException("No rooms available at maximum capacity."));
+        // 2. Auto-assign the first available room uniquely matching the UI parameter bounding payload
+        Room selectedRoom = roomRepository.findByRoomType(request.getRoomType())
+                .stream()
+                .filter(r -> r.getCurrentOccupancy() < r.getCapacity())
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Room Capacity Violation: " + request.getRoomType().name() + " occupancy limit reached."));
 
         // 3. Fetch Hall Reference
         Hall hall = hallRepository.findById(selectedRoom.getHallId())
@@ -70,14 +73,18 @@ public class RoomAllotmentService {
         auditLogger.logOperation(currentUser.getId(), "UPDATED_ROOM_OCCUPANCY", selectedRoom.getId(), "Incremented for student admission");
 
         // 6. Create Student profile manually referenced to User
-        Double overallDues = baseRent + (hall.getAmenityCharge() != null ? hall.getAmenityCharge() : 0.0);
+        Double baseAmenityCharge = hall.getAmenityCharge() != null ? hall.getAmenityCharge() : 0.0;
+        String randomizedMockUserId = "STU_MOCK_" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        
         Student newStudent = Student.builder()
-                .userId(currentUser.getId())
+                .userId(randomizedMockUserId) // Prevents explicit Clerk binding corruption!
                 .studentName(request.getStudentName())
                 .photoFilePath(request.getPhotoFilePath())
                 .roomId(selectedRoom.getId())
                 .duesStatus(DuesStatus.PENDING)
-                .totalDues(overallDues)
+                .roomRentDue(baseRent)
+                .messDue(0.0)
+                .amenitiesDue(baseAmenityCharge)
                 .build();
         
         studentRepository.save(newStudent);
@@ -90,7 +97,7 @@ public class RoomAllotmentService {
         return RegistrationResponse.builder()
                 .studentId(newStudent.getId())
                 .roomId(selectedRoom.getId())
-                .totalRentCalculated(overallDues)
+                .totalRentCalculated(baseRent + baseAmenityCharge)
                 .allotmentLetterBase64(base64Pdf)
                 .build();
     }

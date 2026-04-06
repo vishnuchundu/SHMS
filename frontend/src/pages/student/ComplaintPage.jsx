@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../api/axiosInstance';
-import { MessageSquareWarning, Wrench, CheckCircle2, AlertCircle } from 'lucide-react';
+import { MessageSquareWarning, Wrench, CheckCircle2, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 
 const complaintSchema = z.object({
   category: z.enum(['PLUMBING', 'ELECTRICAL', 'CLEANING', 'INTERNET', 'ATTENDANT', 'OTHER'], {
@@ -35,7 +35,16 @@ export const ComplaintPage = () => {
     onSuccess: () => {
       setSuccess(true);
       reset();
+      refetch();
       setTimeout(() => setSuccess(false), 5000);
+    }
+  });
+
+  const { data: myComplaints, refetch } = useQuery({
+    queryKey: ['myComplaints'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/complaints/mine');
+      return response.data;
     }
   });
 
@@ -134,6 +143,42 @@ export const ComplaintPage = () => {
         </div>
 
       </form>
+
+      {/* NEW: Ticket Tracking History */}
+      <div className="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <Clock className="text-primary" size={24} /> My Ticket History
+        </h2>
+        {(!myComplaints || myComplaints.length === 0) ? (
+           <div className="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400 font-medium tracking-wide">
+              No historical complaints logged.
+           </div>
+        ) : (
+           <div className="space-y-4">
+              {myComplaints.map(complaint => (
+                 <div key={complaint.id} className="p-5 border border-gray-100 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition">
+                    <div>
+                       <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                          {complaint.status === 'RESOLVED' ? <CheckCircle className="text-green-500" size={18} /> : <AlertCircle className="text-warning" size={18} />}
+                          {complaint.title}
+                       </h3>
+                       <p className="text-sm text-gray-500 mt-1">{complaint.description}</p>
+                       {complaint.actionTakenReport && (
+                          <div className="mt-3 text-sm p-3 bg-gray-50 rounded-lg border-l-2 border-primary text-gray-700 italic">
+                             <span className="font-bold">Warden ATR:</span> {complaint.actionTakenReport}
+                          </div>
+                       )}
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                       <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest ${complaint.status === 'RESOLVED' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                          {complaint.status}
+                       </span>
+                    </div>
+                 </div>
+              ))}
+           </div>
+        )}
+      </div>
     </div>
   );
 };
