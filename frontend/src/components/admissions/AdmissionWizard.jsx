@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UploadCloud, CheckCircle, FileText, ArrowRight, ArrowLeft } from 'lucide-react';
+import { UploadCloud, CheckCircle, FileText, ArrowRight, ArrowLeft, User, KeyRound, Copy, CheckCheck } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { Loader } from '../Loader';
 
@@ -19,8 +19,10 @@ const step2Schema = z.object({
 export const AdmissionWizard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [allotmentPdfBase64, setAllotmentPdfBase64] = useState(null);
+  const [credentials, setCredentials] = useState(null); // { username, password }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState(null);
+  const [copied, setCopied]   = useState({ user: false, pass: false });
 
   // Separate validation contexts explicitly tracking linear mappings
   const form1 = useForm({ resolver: zodResolver(step1Schema) });
@@ -45,24 +47,89 @@ export const AdmissionWizard = () => {
         roomType: form1.getValues().roomType,
         photoFilePath: data.photoFilePath,
       };
-      
       const response = await api.post('/api/admissions/register', payload);
       setAllotmentPdfBase64(response.data.allotmentLetterBase64);
-      setCurrentStep(3); // Escalate to PDF View
-      
+      setCredentials({
+        username: response.data.generatedUsername,
+        password: response.data.defaultPassword,
+      });
+      setCurrentStep(3); // Show credentials first
     } catch (err) {
-      setGlobalError("Backend Allocation Exception: Validate DB constraint arrays.");
+      setGlobalError(err.response?.data?.message || 'Backend Allocation Exception: Validate DB constraint arrays.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (currentStep === 3 && allotmentPdfBase64) {
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopied((p) => ({ ...p, [key]: true }));
+    setTimeout(() => setCopied((p) => ({ ...p, [key]: false })), 2000);
+  };
+
+  // Step 3: Credentials Panel
+  if (currentStep === 3 && credentials) {
+    return (
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8 animate-fade-in">
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center mb-4 shadow-inner">
+            <CheckCircle size={32} />
+          </div>
+          <h2 className="text-2xl font-black text-primary">Admission Authorized!</h2>
+          <p className="text-gray-500 text-sm mt-2 font-medium">Hand these credentials to <span className="font-black text-primary">{form1.getValues().studentName}</span>. They will be asked to change their password on first login.</p>
+        </div>
+
+        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6 space-y-4">
+          {/* Username */}
+          <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10"><User size={18} className="text-primary" /></div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-widest">USERNAME</p>
+                <p className="font-black text-primary text-lg">{credentials.username}</p>
+              </div>
+            </div>
+            <button onClick={() => copyToClipboard(credentials.username, 'user')} className="text-gray-400 hover:text-primary transition p-2">
+              {copied.user ? <CheckCheck size={18} className="text-green-500" /> : <Copy size={18} />}
+            </button>
+          </div>
+
+          {/* Password */}
+          <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10"><KeyRound size={18} className="text-accent" /></div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-widest">TEMPORARY PASSWORD</p>
+                <p className="font-black text-accent text-lg font-mono">{credentials.password}</p>
+              </div>
+            </div>
+            <button onClick={() => copyToClipboard(credentials.password, 'pass')} className="text-gray-400 hover:text-accent transition p-2">
+              {copied.pass ? <CheckCheck size={18} className="text-green-500" /> : <Copy size={18} />}
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-center text-gray-400 mt-4 font-medium">⚠ This password is shown only once. Please record it securely or provide it directly to the student.</p>
+
+        <div className="mt-6 flex gap-3">
+          <button onClick={() => setCurrentStep(4)} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md">
+            View Allotment Letter PDF
+          </button>
+          <button onClick={() => window.location.reload()} className="px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition">
+            Admit Another
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 4: PDF viewer
+  if (currentStep === 4 && allotmentPdfBase64) {
     return (
       <div className="flex flex-col h-[70vh] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200">
         <div className="bg-green-500 text-white p-4 flex items-center justify-center gap-2 font-bold select-none border-b border-green-600">
           <CheckCircle className="animate-bounce" />
-          <span>Allotment Authorized! PDF Payload Computed.</span>
+          <span>Allotment Letter — {form1.getValues().studentName}</span>
         </div>
         <iframe
           src={`data:application/pdf;base64,${allotmentPdfBase64}`}
@@ -70,7 +137,7 @@ export const AdmissionWizard = () => {
           title="Allotment Letter"
         />
         <div className="p-4 bg-white border-t border-gray-200 flex justify-end">
-           <button 
+           <button
              onClick={() => window.location.reload()}
              className="px-6 py-2 bg-primary text-white font-bold rounded shadow-sm hover:bg-gray-800 transition"
            >

@@ -37,6 +37,7 @@ public class AuthController {
                 .token(jwt)
                 .username(userDetails.getUsername())
                 .role(userDetails.getRole().name())
+                .mustChangePassword(userDetails.isMustChangePassword())
                 .build();
 
         return ResponseEntity.ok(response);

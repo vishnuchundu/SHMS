@@ -31,6 +31,10 @@ public class User implements UserDetails {
 
     private Role role;
 
+    // True for newly admitted students — forces a password change on first login
+    @Builder.Default
+    private boolean mustChangePassword = false;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));

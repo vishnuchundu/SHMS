@@ -49,12 +49,11 @@ export const AuthProvider = ({ children }) => {
       setUser({
         sub: decoded.sub,
         roles: decoded.roles || [],
-        token
+        token,
+        mustChangePassword: response.data.mustChangePassword || false,
       });
 
-      // Delegate explicit traversal mapping securely natively to RoleBasedRedirect inside App.jsx
       navigate('/');
-      
       return response.data;
     } catch (error) {
       throw error;

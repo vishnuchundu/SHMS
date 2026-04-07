@@ -24,5 +24,6 @@ public class AuthDtos {
         private String token;
         private String username;
         private String role;
+        private boolean mustChangePassword;
     }
 }

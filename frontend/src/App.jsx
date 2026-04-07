@@ -7,6 +7,7 @@ import { Loader } from './components/Loader';
 
 // Module 2 Components
 import { AdmissionsPage } from './pages/AdmissionsPage';
+import { MyAllotmentPage } from './pages/student/MyAllotmentPage';
 
 // Module 3 Components
 import { MyDuesPage } from './pages/student/MyDuesPage';
@@ -31,12 +32,16 @@ import { HallExpenseTrackerPage } from './pages/warden/HallExpenseTrackerPage';
 // Phase E Module Additions
 import { AuditLogsPage } from './pages/admin/AuditLogsPage';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
+import { ChangePasswordPage } from './pages/student/ChangePasswordPage';
 
 // Intelligent Root Index Redirection mapping natively against JWT roles
 const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
   if (loading) return <Loader />;
   if (!user) return <Navigate to="/login" replace />;
+
+  // Force password change before any navigation
+  if (user.mustChangePassword) return <Navigate to="/student/change-password" replace />;
 
   if (user.roles.includes('ROLE_STUDENT')) return <Navigate to="/student/dues" replace />;
   if (user.roles.includes('ROLE_ADMIN')) return <Navigate to="/admin/grants" replace />;
@@ -62,6 +67,7 @@ function App() {
         <Routes>
           {/* Public Authentication Mapping */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/student/change-password" element={<ChangePasswordPage />} />
           
           {/* Root Role-Based Dynamic Redirection Node */}
           <Route path="/" element={<RoleBasedRedirect />} />
@@ -73,7 +79,7 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['ROLE_STUDENT']} />}>
               <Route path="/student/dues" element={<MyDuesPage />} />
               <Route path="/student/complaints" element={<ComplaintPage />} />
-              <Route path="/student/allotment" element={<TemporaryDashboard title="My Allotment" />} />
+              <Route path="/student/allotment" element={<MyAllotmentPage />} />
             </Route>
             
             {/* 2. CLERK BLOCK */}

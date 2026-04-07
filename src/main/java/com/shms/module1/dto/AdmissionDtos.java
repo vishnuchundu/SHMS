@@ -27,6 +27,9 @@ public class AdmissionDtos {
         private String studentId;
         private String roomId;
         private Double totalRentCalculated;
-        private String allotmentLetterBase64; // Will send direct link/file in controller but keeping byte payload handy
+        private String allotmentLetterBase64;
+        // Auto-generated login credentials — displayed to clerk after admission
+        private String generatedUsername;
+        private String defaultPassword;
     }
 }
